@@ -20,25 +20,6 @@ func main() {
 	item5 = NewItem(5, "Manga", 312.00)
 	user1 = User{ID: 1, User: "user1"}
 	user2 = User{ID: 2, User: "user2"}
-	/*user1.AddItemsToCart(item1)
-	user1.AddItemsToCart(item2)
-	user2.AddItemsToCart(item2)
-	user1.AddItemsToCart(item3)
-	user1.AddItemsToCart(item4)
-	user2.AddItemsToCart(item2)
-	user2.AddItemsToCart(item5)
-	user2.AddItemsToCart(item4)
-	user1.RemoveItemsFromCart(item2)
-	user2.RemoveItemsFromCart(item2)
-	user2.RemoveItemsFromCart(item4)
-	user1.ShowUserCart()
-	user2.ShowUserCart()
-	user1.itemPrice()*/
-	//fmt.Println(user1.String())
-	//fmt.Println(user2.String())
-	//fmt.Println(user1.User, user1.Cart, user1.CartSum)
-	//fmt.Println(user2.User, user2.Cart)
-
 	log.Println("server start")
 	http.HandleFunc("/get_catalog", catalogHandler)
 	http.HandleFunc("/get_cart", cartHandler)
@@ -70,16 +51,16 @@ func removeHandler(w http.ResponseWriter, r *http.Request) {
 	itemID := r.URL.Query().Get("itemID")
 
 	if userID == "" || itemID == "" {
-		http.Error(w, "404", http.StatusBadRequest)
+		http.Error(w, "parameters not specified", http.StatusBadRequest)
 	}
 	userIDInt, err := strconv.Atoi(userID)
 	if err != nil {
-		http.Error(w, "неверный ID", http.StatusBadRequest)
+		http.Error(w, "invalid ID", http.StatusBadRequest)
 		return
 	}
 	itemIDInt, err := strconv.Atoi(itemID)
 	if err != nil {
-		http.Error(w, "неверный ID", http.StatusBadRequest)
+		http.Error(w, "invalid ID", http.StatusBadRequest)
 		return
 	}
 	var user *User
@@ -105,16 +86,16 @@ func addHandler(w http.ResponseWriter, r *http.Request) {
 	itemID := r.URL.Query().Get("itemid")
 
 	if userID == "" || itemID == "" {
-		http.Error(w, "параметры не указаны", http.StatusBadRequest)
+		http.Error(w, "parameters not specified", http.StatusBadRequest)
 	}
 	userIDInt, err := strconv.Atoi(userID)
 	if err != nil {
-		http.Error(w, "неверный ID", http.StatusBadRequest)
+		http.Error(w, "ivalid ID", http.StatusBadRequest)
 		return
 	}
 	itemIDInt, err := strconv.Atoi(itemID)
 	if err != nil {
-		http.Error(w, "неверный ID", http.StatusBadRequest)
+		http.Error(w, "ivalid ID", http.StatusBadRequest)
 		return
 	}
 	var user *User
@@ -146,12 +127,12 @@ func catalogHandler(w http.ResponseWriter, r *http.Request) {
 func userHandler(w http.ResponseWriter, r *http.Request) {
 	userID := r.URL.Query().Get("userid")
 	if userID == "" {
-		http.Error(w, "405", http.StatusBadRequest)
+		http.Error(w, "404", http.StatusBadRequest)
 		return
 	}
 	userIDInt, err := strconv.Atoi(userID)
 	if err != nil {
-		http.Error(w, "неверное значение", http.StatusBadRequest)
+		http.Error(w, "ivalid value", http.StatusBadRequest)
 		return
 	}
 	var user *User
@@ -160,26 +141,10 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 	} else if userIDInt == user2.ID {
 		user = &user2
 	} else {
-		http.Error(w, "такого пользователя нет", http.StatusNotFound)
+		http.Error(w, "user not found", http.StatusNotFound)
 		return
 	}
 	json.NewEncoder(w).Encode(user)
-	/*params := strings.Split(r.URL.Path, "/")
-	if len(params) != 3 {
-		http.Error(w, "404", http.StatusBadRequest)
-		return
-	}
-	userName := params[2]
-	var user User
-	if userName == user1.User {
-		user = user1
-	} else if userName == user2.User {
-		user = user2
-	} else {
-		http.Error(w, "404", http.StatusNotFound)
-		return
-	}
-	json.NewEncoder(w).Encode(user)*/
 }
 
 func cartHandler(w http.ResponseWriter, r *http.Request) {
@@ -245,7 +210,7 @@ func getItemID(itemID int) (Item, error) {
 			return item, nil
 		}
 	}
-	return Item{}, fmt.Errorf("такого товара нет", itemID)
+	return Item{}, fmt.Errorf("there is no such item", itemID)
 }
 func (u *User) String() string {
 	cart := make([]string, len(u.Cart))
