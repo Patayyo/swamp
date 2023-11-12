@@ -4,51 +4,25 @@ import (
 	"context"
 
 	//"encoding/json"
-	"fmt"
-	"log"
-	"math"
-	"math/rand"
-	"strconv"
-
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"log"
+	"math"
+	"math/rand"
+	"strconv"
 )
 
 var user1, user2 User
-var item1, item2, item3, item4, item5 Item
-var db *mongo.Client
 
 func main() {
-	/*item1 = NewItem(1, "Car", 1000.312)
-	item2 = NewItem(2, "Pivo", 99.09)
-	item3 = NewItem(3, "Kniga", 124.12)
-	item4 = NewItem(4, "Iphone", 1434.1)
-	item5 = NewItem(5, "Manga", 312.00)*/
-	var err error
-	db, err = mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://localhost:27017"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = db.Ping(context.TODO(), nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	items, err := loadItemsFromDB()
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	initMongoDB()
+	defer closeMongoDB()
 	user1 = User{ID: 1, User: "user1"}
 	user2 = User{ID: 2, User: "user2"}
 	user1.Cart = []Item{}
 	user2.Cart = []Item{}
-	var itemsList []Item
-	for _, item := range items {
-		itemsList = append(itemsList, item)
-	}
 
 	app := fiber.New()
 	api := app.Group("/api")
@@ -56,16 +30,10 @@ func main() {
 	v1.Get("/healthcheck", healthcheck)
 	v1.Get("/get_catalog", catalogHandler)
 	v1.Get("/items", catalogHandler)
-	//v1.Get("/get_user_cart", userHandler)
-	//v1.Get("/add_item_to_cart", addHandler)
 	v1.Post("/item", addItemHandler)
 	v1.Post("/item/:ItemID", updateItemHandler)
 	v1.Delete("/item/:ItemID", deleteItemHandler)
 	v1.Get("/item/:ItemID", getItemHandler)
-	//v1.Get("/remove_item_from_cart", removeHandler)
-
-	fmt.Println("Connected to MongoDB!")
-	defer db.Disconnect(context.TODO())
 	app.Listen(":8080")
 }
 
