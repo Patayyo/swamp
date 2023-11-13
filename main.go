@@ -2,16 +2,16 @@ package main
 
 import (
 	"context"
-
 	//"encoding/json"
-	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	"log"
 	"math"
 	"math/rand"
 	"strconv"
+
+	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var user1, user2 User
@@ -19,6 +19,7 @@ var user1, user2 User
 func main() {
 	initMongoDB()
 	defer closeMongoDB()
+
 	user1 = User{ID: 1, User: "user1"}
 	user2 = User{ID: 2, User: "user2"}
 	user1.Cart = []Item{}
