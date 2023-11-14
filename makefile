@@ -1,5 +1,12 @@
+null:
+	@:
+
 run:
-	go run main.go mongo.go
+	go run ./app
 
 migration:
-	go run D:/gorepos/usercart-main/migrations/migration.go D:/gorepos/usercart-main/migrations/mongo.go
+	go run ./tools/migrations
+
+
+docker-up:
+	docker
