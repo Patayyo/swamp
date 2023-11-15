@@ -9,4 +9,4 @@ migration:
 
 
 docker-up:
-	docker
+	docker compose up --detach

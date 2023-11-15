@@ -1,7 +1,17 @@
 version: '3.1'
 
 services:
-
+#  app:
+#    build:
+#        dockerfile: Dockerfile
+#        context: .
+#        target: dev
+#    volumes:
+#      - .:/opt/app/api
+#    ports:
+#      - "8080:8080"
+#    expose:
+#      - "8080"
   mongo:
     image: mongo
     restart: always
@@ -17,7 +27,7 @@ services:
     image: mongo-express
     restart: always
     ports:
-      - 8081:8081
+      - "8081:8081"
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: root
       ME_CONFIG_MONGODB_ADMINPASSWORD: example
