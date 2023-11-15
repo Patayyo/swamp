@@ -18,7 +18,7 @@ var db *mongo.Client
 const (
 	Database         = "usercart"
 	ItemsCollection  = "items"
-	ConnectionString = "mongodb://root:example@localhost:27017/"
+	ConnectionString = "mongodb://root:example@mongo:27017/"
 )
 
 // NewStore creates child for the Store interface

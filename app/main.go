@@ -6,6 +6,7 @@ import (
 	"github.com/gorepos/usercartv2/internal/handlers"
 	"github.com/gorepos/usercartv2/internal/store/store_mongo"
 	"go.mongodb.org/mongo-driver/mongo"
+	"log"
 )
 
 //var user1, user2 User
@@ -13,6 +14,7 @@ import (
 var db *mongo.Client
 
 func main() {
+	log.Println("Program started...")
 	//user1 = User{ID: 1, User: "user1"}
 	//user2 = User{ID: 2, User: "user2"}
 	//user1.Cart = []Item{}

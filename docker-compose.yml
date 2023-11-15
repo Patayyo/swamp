@@ -1,17 +1,15 @@
 version: '3.1'
 
 services:
-#  app:
-#    build:
-#        dockerfile: Dockerfile
-#        context: .
-#        target: dev
-#    volumes:
-#      - .:/opt/app/api
-#    ports:
-#      - "8080:8080"
-#    expose:
-#      - "8080"
+  app:
+    build:
+      # Correct the path to your Dockerfile
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+    # Important to bind/mount your codebase dir to /app dir for live reload
+    volumes:
+      - ./:/opt/app/api
   mongo:
     image: mongo
     restart: always
