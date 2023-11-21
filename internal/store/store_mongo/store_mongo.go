@@ -2,11 +2,12 @@ package store_mongo
 
 import (
 	"context"
+	"log"
+
 	"github.com/gorepos/usercartv2/internal/store"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"log"
 )
 
 type MongoStore struct {
@@ -80,4 +81,52 @@ func (s *MongoStore) GetItems() ([]store.Item, error) {
 	}
 	return items, nil
 
+}
+
+func (s *MongoStore) AddItem(item store.Item) error {
+	collection := s.Store.Database(Database).Collection(ItemsCollection)
+
+	_, err := collection.InsertOne(context.Background(), item)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *MongoStore) GetItemByID(id string) (*store.Item, error) {
+	var item store.Item
+	collection := s.Store.Database(Database).Collection(ItemsCollection)
+
+	err := collection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&item)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &item, nil
+}
+
+func (s *MongoStore) UpdateItem(id string, updatedItem store.Item) error {
+	collection := s.Store.Database(Database).Collection(ItemsCollection)
+
+	_, err := collection.UpdateOne(
+		context.Background(),
+		bson.M{"_id": id},
+		bson.M{"$set": updatedItem},
+	)
+	if err != nil {
+		return nil
+	}
+	return nil
+}
+
+func (s *MongoStore) DeleteItem(id string) error {
+	collection := s.Store.Database(Database).Collection(ItemsCollection)
+
+	_, err := collection.DeleteOne(context.Background(), bson.M{"_id": id})
+	if err != nil {
+		return err
+	}
+	return nil
 }

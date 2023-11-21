@@ -1,5 +1,19 @@
 package handlers
 
+import (
+	"github.com/gofiber/fiber/v2"
+)
+
+func (ch *CatalogHandler) DeleteItemHandler(c *fiber.Ctx) error {
+	itemID := c.Params("ItemID")
+
+	if err := ch.App.S.DeleteItem(itemID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to delete item"})
+	}
+
+	return c.JSON(fiber.Map{"message": "Item deleted successfully"})
+}
+
 /*func AddItemHandler(c *fiber.Ctx) error {
 	var input NewItemInput
 	if err := c.BodyParser(&input); err != nil {
@@ -34,25 +48,9 @@ func UpdateItemHandler(c *fiber.Ctx) error {
 	}
 	return c.JSON(updatedItem)
 }
+*/
 
-func DeleteItemHandler(c *fiber.Ctx) error {
-	itemID := c.Params("ItemID")
-	if itemID == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("400")
-	}
-	itemObjectID, err := primitive.ObjectIDFromHex(itemID)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).SendString("400")
-	}
-	collection := db.Database("proba").Collection("Items")
-	filter := bson.M{"_id": itemObjectID}
-	_, err = collection.DeleteOne(context.Background(), filter)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString("500")
-	}
-	return c.SendStatus(fiber.StatusNoContent)
-}
-
+/*
 func GetItemHandler(c *fiber.Ctx) error {
 	itemID := c.Params("ItemID")
 	if itemID == "" {
