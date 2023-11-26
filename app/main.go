@@ -1,12 +1,13 @@
 package main
 
 import (
+	"log"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gorepos/usercartv2/internal/application"
 	"github.com/gorepos/usercartv2/internal/handlers"
 	"github.com/gorepos/usercartv2/internal/store/store_mongo"
 	"go.mongodb.org/mongo-driver/mongo"
-	"log"
 )
 
 //var user1, user2 User
@@ -34,10 +35,10 @@ func main() {
 	catalogHandler := handlers.CatalogHandler{App: a}
 	v1.Get("/get_catalog", catalogHandler.GetCatalog)
 	v1.Get("/items", catalogHandler.GetCatalog)
-	//v1.Post("/item", handlers.AddItemHandler)
-	//v1.Post("/item/:ItemID", handlers.UpdateItemHandler)
-	//v1.Delete("/item/:ItemID", handlers.DeleteItemHandler)
-	//v1.Get("/item/:ItemID", handlers.GetItemHandler)
+	v1.Post("/item", catalogHandler.AddItemHandler)
+	v1.Post("/item/:ItemID", catalogHandler.UpdateItemHandler)
+	v1.Delete("/item/:ItemID", catalogHandler.DeleteItemHandler)
+	v1.Get("/item/:ItemID", catalogHandler.GetItemHandler)
 	err = app.Listen(":8080")
 	if err != nil {
 		return

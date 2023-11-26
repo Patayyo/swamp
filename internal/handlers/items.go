@@ -1,5 +1,87 @@
 package handlers
 
+/*items.go содержит методы для обработки HTTP-запросов, связанных с операциями над товарами.
+Каждый метод  выполняет действия, такик как удаление, добавление, получение и обновление товара в каталоге.
+Также внутри методов добавлено логирование для регистрации действий пользователя и отслеживания возможных ошибок.
+Структуры и методы предназначены для использования в приложении для управления каталогом товаров.*/
+
+import (
+	"log"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gorepos/usercartv2/internal/store"
+)
+
+// DeleteItemHandler processes an HTTP request to delete an item from the catalog by ID.
+func (ch *CatalogHandler) DeleteItemHandler(c *fiber.Ctx) error {
+	itemID := c.Params("ItemID")
+
+	err := ch.App.S.DeleteItem(itemID)
+	if err != nil {
+		log.Printf("Error deleting item with ID %s: %v", itemID, err)
+		return c.Status(fiber.StatusInternalServerError).SendString("Internal Serrver Error")
+	}
+
+	log.Printf("Item with ID %s deleted successfully", itemID)
+	return c.SendString("Item deleted successfully")
+}
+
+// AddItemHandler processes an HTTP request for add new item from the catalog.
+func (ch *CatalogHandler) AddItemHandler(c *fiber.Ctx) error {
+	var newItem store.Item
+
+	if err := c.BodyParser(&newItem); err != nil {
+		log.Printf("Error parsing request body: %v", err)
+		return c.Status(fiber.StatusBadRequest).SendString("Invalid request format")
+	}
+
+	if err := ch.App.S.AddItem(newItem); err != nil {
+		log.Printf("Error adding item: %v", err)
+		return c.Status(fiber.StatusInternalServerError).SendString("Failed to add item to the catalog")
+	}
+
+	log.Printf("Item added to the catalog successfully: %+v", newItem)
+	return c.SendString("Item added to the catalog successfully")
+}
+
+// GetItemHandler processes an HTTP request to find an item from the catalog by ID.
+func (ch *CatalogHandler) GetItemHandler(c *fiber.Ctx) error {
+	itemID := c.Params("ItemID")
+
+	item, err := ch.App.S.GetItemByID(itemID)
+	if err != nil {
+		log.Printf("Error getting item with ID %s: %v", itemID, err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to get item"})
+	}
+
+	if item == nil {
+		log.Printf("Item with ID %s not found", itemID)
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Item not found"})
+	}
+
+	log.Printf("Item with ID %s retrieved successfully: %+v", itemID, item)
+	return c.JSON(item)
+}
+
+// UpdateItemHandler processes an HTTP request to update info about an item from the catalog by ID.
+func (ch *CatalogHandler) UpdateItemHandler(c *fiber.Ctx) error {
+	itemID := c.Params("ItemID")
+
+	var updatedItem store.Item
+	if err := c.BodyParser(&updatedItem); err != nil {
+		log.Printf("Error parsing request body: %v", err)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid requset format"})
+	}
+
+	if err := ch.App.S.UpdateItem(itemID, updatedItem); err != nil {
+		log.Printf("Error updating item with ID %s: %v", itemID, err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to update item"})
+	}
+
+	log.Printf("Item with ID %s updated successfully: %+v", itemID, updatedItem)
+	return c.JSON(fiber.Map{"message": "Item updated successfully"})
+}
+
 /*func AddItemHandler(c *fiber.Ctx) error {
 	var input NewItemInput
 	if err := c.BodyParser(&input); err != nil {
@@ -16,6 +98,21 @@ package handlers
 }
 
 func UpdateItemHandler(c *fiber.Ctx) error {
+
+
+	itemID := c.Params("ItemID")
+
+	var updatedItem store.Item
+	if err := c.BodyParser(&updatedItem); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid requset format"})
+	}
+
+	if err := ch.App.S.UpdateItem(itemID, updatedItem); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to update item"})
+	}
+
+	return c.JSON(fiber.Map{"message": "Item updated successfully"})
+
 	itemID := c.Params("ItemID")
 	if itemID == "" {
 		return c.Status(fiber.StatusBadRequest).SendString("400")
@@ -34,25 +131,9 @@ func UpdateItemHandler(c *fiber.Ctx) error {
 	}
 	return c.JSON(updatedItem)
 }
+*/
 
-func DeleteItemHandler(c *fiber.Ctx) error {
-	itemID := c.Params("ItemID")
-	if itemID == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("400")
-	}
-	itemObjectID, err := primitive.ObjectIDFromHex(itemID)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).SendString("400")
-	}
-	collection := db.Database("proba").Collection("Items")
-	filter := bson.M{"_id": itemObjectID}
-	_, err = collection.DeleteOne(context.Background(), filter)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString("500")
-	}
-	return c.SendStatus(fiber.StatusNoContent)
-}
-
+/*
 func GetItemHandler(c *fiber.Ctx) error {
 	itemID := c.Params("ItemID")
 	if itemID == "" {

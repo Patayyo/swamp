@@ -2,11 +2,13 @@ package store_mongo
 
 import (
 	"context"
+	"log"
+
 	"github.com/gorepos/usercartv2/internal/store"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"log"
 )
 
 type MongoStore struct {
@@ -80,4 +82,69 @@ func (s *MongoStore) GetItems() ([]store.Item, error) {
 	}
 	return items, nil
 
+}
+
+func (s *MongoStore) AddItem(item store.Item) error {
+	collection := s.Store.Database(Database).Collection(ItemsCollection)
+
+	_, err := collection.InsertOne(context.Background(), item)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *MongoStore) GetItemByID(id string) (*store.Item, error) {
+	collection := s.Store.Database(Database).Collection(ItemsCollection)
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var item store.Item
+	err = collection.FindOne(context.Background(), bson.M{"_id": objectID}).Decode(&item)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			// Если не найдено, вернуть nil без ошибки
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &item, nil
+}
+
+func (s *MongoStore) UpdateItem(id string, updatedItem store.Item) error {
+	collection := s.Store.Database(Database).Collection(ItemsCollection)
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	filter := bson.M{"_id": objectID}
+	update := bson.M{"$set": bson.M{
+		"name":  updatedItem.Name,
+		"price": updatedItem.Price,
+	}}
+
+	_, err = collection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *MongoStore) DeleteItem(id string) error {
+	collection := s.Store.Database(Database).Collection(ItemsCollection)
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	_, err = collection.DeleteOne(context.Background(), bson.M{"_id": objectID})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
