@@ -20,14 +20,10 @@ var db *mongo.Client
 const (
 	Database         = "usercart"
 	ItemsCollection  = "items"
+	UsersCollection  = "user"
 	ConnectionString = "mongodb://root:example@mongo:27017/"
 )
 
-// NewStore creates child for the Store interface
-/*
-There are two functions NewStore and CreateConnection, NewStore()
-creates child of the interface for Store, while CreateConnection creates low level store client
-*/
 func NewStore() (*MongoStore, error) {
 	db, err := CreateConnection()
 	if err != nil {
@@ -38,7 +34,6 @@ func NewStore() (*MongoStore, error) {
 	return ms, nil
 }
 
-// CreateConnection function creates low level connection to the mongo database
 func CreateConnection() (*mongo.Client, error) {
 	var err error
 	db, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(ConnectionString))
@@ -105,7 +100,6 @@ func (s *MongoStore) GetItemByID(id string) (*store.Item, error) {
 	err = collection.FindOne(context.Background(), bson.M{"_id": objectID}).Decode(&item)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			// Если не найдено, вернуть nil без ошибки
 			return nil, nil
 		}
 		return nil, err
@@ -147,4 +141,26 @@ func (s *MongoStore) DeleteItem(id string) error {
 	}
 
 	return nil
+}
+
+func (s *MongoStore) CreateUser(user store.User) error {
+	collection := s.Store.Database(Database).Collection(UsersCollection)
+
+	_, err := collection.InsertOne(context.Background(), user)
+	return err
+}
+
+func (s *MongoStore) GetUserByUsername(username string) (*store.User, error) {
+	collection := s.Store.Database(Database).Collection(UsersCollection)
+
+	var user store.User
+	err := collection.FindOne(context.Background(), bson.M{"username": username}).Decode(&user)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &user, nil
 }

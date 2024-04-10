@@ -1,10 +1,5 @@
 package handlers
 
-/*items.go содержит методы для обработки HTTP-запросов, связанных с операциями над товарами.
-Каждый метод  выполняет действия, такик как удаление, добавление, получение и обновление товара в каталоге.
-Также внутри методов добавлено логирование для регистрации действий пользователя и отслеживания возможных ошибок.
-Структуры и методы предназначены для использования в приложении для управления каталогом товаров.*/
-
 import (
 	"log"
 
@@ -12,7 +7,6 @@ import (
 	"github.com/gorepos/usercartv2/internal/store"
 )
 
-// DeleteItemHandler processes an HTTP request to delete an item from the catalog by ID.
 func (ch *CatalogHandler) DeleteItemHandler(c *fiber.Ctx) error {
 	itemID := c.Params("ItemID")
 
@@ -26,7 +20,6 @@ func (ch *CatalogHandler) DeleteItemHandler(c *fiber.Ctx) error {
 	return c.SendString("Item deleted successfully")
 }
 
-// AddItemHandler processes an HTTP request for add new item from the catalog.
 func (ch *CatalogHandler) AddItemHandler(c *fiber.Ctx) error {
 	var newItem store.Item
 
@@ -44,7 +37,6 @@ func (ch *CatalogHandler) AddItemHandler(c *fiber.Ctx) error {
 	return c.SendString("Item added to the catalog successfully")
 }
 
-// GetItemHandler processes an HTTP request to find an item from the catalog by ID.
 func (ch *CatalogHandler) GetItemHandler(c *fiber.Ctx) error {
 	itemID := c.Params("ItemID")
 
@@ -63,7 +55,6 @@ func (ch *CatalogHandler) GetItemHandler(c *fiber.Ctx) error {
 	return c.JSON(item)
 }
 
-// UpdateItemHandler processes an HTTP request to update info about an item from the catalog by ID.
 func (ch *CatalogHandler) UpdateItemHandler(c *fiber.Ctx) error {
 	itemID := c.Params("ItemID")
 
@@ -81,72 +72,3 @@ func (ch *CatalogHandler) UpdateItemHandler(c *fiber.Ctx) error {
 	log.Printf("Item with ID %s updated successfully: %+v", itemID, updatedItem)
 	return c.JSON(fiber.Map{"message": "Item updated successfully"})
 }
-
-/*func AddItemHandler(c *fiber.Ctx) error {
-	var input NewItemInput
-	if err := c.BodyParser(&input); err != nil {
-		return c.Status(fiber.StatusBadRequest).SendString("400")
-	}
-	newItem := Item{
-		Name:  input.Name,
-		Price: input.Price,
-	}
-	if err := createItemInDB(newItem); err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString("500")
-	}
-	return c.JSON(newItem)
-}
-
-func UpdateItemHandler(c *fiber.Ctx) error {
-
-
-	itemID := c.Params("ItemID")
-
-	var updatedItem store.Item
-	if err := c.BodyParser(&updatedItem); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid requset format"})
-	}
-
-	if err := ch.App.S.UpdateItem(itemID, updatedItem); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to update item"})
-	}
-
-	return c.JSON(fiber.Map{"message": "Item updated successfully"})
-
-	itemID := c.Params("ItemID")
-	if itemID == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("400")
-	}
-	itemObjectID, err := primitive.ObjectIDFromHex(itemID)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).SendString("400")
-	}
-	var updatedItem Item
-	if err := c.BodyParser(&updatedItem); err != nil {
-		return c.Status(fiber.StatusBadRequest).SendString("400")
-	}
-	err = updateItemInDB(itemObjectID, updatedItem)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString("500")
-	}
-	return c.JSON(updatedItem)
-}
-*/
-
-/*
-func GetItemHandler(c *fiber.Ctx) error {
-	itemID := c.Params("ItemID")
-	if itemID == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("400")
-	}
-	itemObjectID, err := primitive.ObjectIDFromHex(itemID)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).SendString("400")
-	}
-	item, err := getItemFromDB(itemObjectID)
-	if err != nil {
-		return c.Status(fiber.StatusNotFound).SendString("404")
-	}
-	return c.JSON(item)
-}
-*/
