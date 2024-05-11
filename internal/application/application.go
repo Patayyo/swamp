@@ -11,3 +11,4 @@ type Application struct {
 func NewApplication(store store.Store) *Application {
 	return &Application{S: store}
 }
+

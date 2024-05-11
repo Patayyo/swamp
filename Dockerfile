@@ -1,6 +1,6 @@
-FROM golang:1.21-alpine
+FROM golang:1.22-alpine
 
-WORKDIR /opt/app/api
+WORKDIR /opt/app/api/
 
 RUN go install github.com/cosmtrek/air@latest
 

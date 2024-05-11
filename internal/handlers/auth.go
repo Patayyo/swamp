@@ -1,6 +1,10 @@
 package handlers
 
 import (
+	"errors"
+	"fmt"
+	"log"
+	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -15,10 +19,12 @@ type AuthHandler struct {
 
 var jwtSecret = []byte("your_jwt_secret_key")
 
-func createToken(username string) (string, error) {
+func createToken(username, role string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["username"] = username
+	claims["role"] = role
+
 	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
 
 	tokenString, err := token.SignedString(jwtSecret)
@@ -52,8 +58,8 @@ func (ah *AuthHandler) Register(c *fiber.Ctx) error {
 
 func (ah *AuthHandler) Login(c *fiber.Ctx) error {
 	var credentials struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
+		Username string `json:"username" bson:"username,omitempty"`
+		Password string `json:"password" bson:"password,omitempty"`
 	}
 	if err := c.BodyParser(&credentials); err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString("Invalid request format")
@@ -71,10 +77,73 @@ func (ah *AuthHandler) Login(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
 	}
 
-	token, err := createToken(user.Username)
+	token, err := createToken(user.Username, user.Role)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to create token")
 	}
 
 	return c.JSON(fiber.Map{"token": token})
+}
+
+func extractTokenFromRequest(c *fiber.Ctx) string {
+	authHeader := c.Get("Authorization")
+	if authHeader == "" {
+		token := c.Cookies("jwt")
+		return token
+	}
+
+	return strings.Replace(authHeader, "Bearer ", "", 1)
+}
+
+func extractUserIDFromToken(tokenString string) (string, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(jwtSecret), nil
+	})
+	if err != nil {
+		return "", err
+	}
+
+	if !token.Valid {
+		return "", errors.New("token is not valid")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return "", errors.New("failed to parse claims")
+	}
+
+	username, ok := claims["username"].(string)
+	if !ok {
+		return "", errors.New("username not found in token")
+	}
+
+	return username, nil
+}
+
+func (ah *AuthHandler) AdminMiddleware(c *fiber.Ctx) error {
+	token := extractTokenFromRequest(c)
+	if token == "" {
+		return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
+	}
+
+	username, err := extractUserIDFromToken(token)
+	if err != nil {
+		log.Printf("Error extracting user ID from token: %v", err)
+		return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
+	}
+
+	user, err := ah.App.S.GetUserByUsername(username)
+	if err != nil || user == nil {
+		log.Printf("Error retrieving user: %v", err)
+		return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
+	}
+
+	if user.Role != "admin" {
+		return c.Status(fiber.StatusForbidden).SendString("Forbidden")
+	}
+
+	return c.Next()
 }
