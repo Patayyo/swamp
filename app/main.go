@@ -39,7 +39,7 @@ func main() {
 
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
-		AllowMethods: "GET,POST,DELETE",
+		AllowMethods: "GET,POST,DELETE ,PUT",
 	}))
 
 	api := app.Group("/api")

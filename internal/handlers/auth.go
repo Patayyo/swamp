@@ -19,9 +19,10 @@ type AuthHandler struct {
 
 var jwtSecret = []byte("your_jwt_secret_key")
 
-func createToken(username, role string) (string, error) {
+func createToken(userID, username, role string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
+	claims["userID"] = userID
 	claims["username"] = username
 	claims["role"] = role
 
@@ -77,7 +78,7 @@ func (ah *AuthHandler) Login(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
 	}
 
-	token, err := createToken(user.Username, user.Role)
+	token, err := createToken(user.ID.Hex(), user.Username, user.Role)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to create token")
 	}

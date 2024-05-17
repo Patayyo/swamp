@@ -9,9 +9,10 @@ type Store interface {
 	CreateUser(user User) error
 	GetUserByUsername(username string) (*User, error)
 	GetUserByID(userID string) (*User, error)
-	AddItemToCart(userID string, itemID string) error
-	RemoveItemFromCart(userID, itemID string) error
-	GetCart(userID string) ([]Item, error)
+	AddItemToCart(string, string) error
+	RemoveItemFromCart(string, string) error
+	GetCart(string) ([]Item, error)
+	CreateCart(string) error
 	GetUsers() ([]User, error)
 	DeleteUser(id string) error
 }

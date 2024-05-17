@@ -37,17 +37,21 @@ func NewStore() (*MongoStore, error) {
 }
 
 func CreateConnection() (*mongo.Client, error) {
-	var err error
-	db, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(ConnectionString))
+	clientOptions := options.Client().ApplyURI(ConnectionString)
+	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to connect to MongoDB: %v", err)
+		return nil, err
 	}
-	err = db.Ping(context.TODO(), nil)
+
+	err = client.Ping(context.TODO(), nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to ping MongoDB: %v", err)
+		return nil, err
 	}
-	log.Println("Connected to mongodb!")
-	return db, nil
+
+	log.Println("Connected to MongoDB!")
+	return client, nil
 }
 
 func CloseConnection() {
@@ -117,6 +121,7 @@ func (s *MongoStore) UpdateItem(id string, updatedItem store.Item) error {
 	update := bson.M{"$set": bson.M{
 		"name":  updatedItem.Name,
 		"price": updatedItem.Price,
+		"type":  updatedItem.Type,
 	}}
 
 	_, err = collection.UpdateOne(context.Background(), filter, update)
@@ -144,6 +149,8 @@ func (s *MongoStore) DeleteItem(id string) error {
 func (s *MongoStore) CreateUser(user store.User) error {
 	collection := s.Store.Database(Database).Collection(UsersCollection)
 
+	user.Cart = []store.Item{}
+
 	_, err := collection.InsertOne(context.Background(), user)
 	return err
 }
@@ -164,48 +171,64 @@ func (s *MongoStore) GetUserByUsername(username string) (*store.User, error) {
 	return &user, nil
 }
 
-func (s *MongoStore) AddItemToCart(userID string, itemID string) error {
+func (s *MongoStore) AddItemToCart(userID, itemID string) error {
 	collection := s.Store.Database(Database).Collection(CartCollection)
 
-	filter := bson.M{"_id": userID}
-	update := bson.M{
-		"$push": bson.M{
-			"cart": bson.M{
-				"item_id": itemID,
-			},
-		},
-	}
-
-	_, err := collection.UpdateOne(context.Background(), filter, update)
+	item, err := s.GetItemByID(itemID)
 	if err != nil {
 		return err
 	}
-	return nil
+
+	_, err = collection.UpdateOne(
+		context.Background(),
+		bson.M{"_id": userID},
+		bson.M{"$push": bson.M{"items": item}},
+		options.Update().SetUpsert(true),
+	)
+	return err
 }
 
 func (s *MongoStore) RemoveItemFromCart(userID, itemID string) error {
 	collection := s.Store.Database(Database).Collection(CartCollection)
-
-	filter := bson.M{"_id": userID}
-	update := bson.M{"$pull": bson.M{"cart": bson.M{"_id": itemID}}}
-
-	_, err := collection.UpdateOne(context.Background(), filter, update)
+	objectID, err := primitive.ObjectIDFromHex(itemID)
 	if err != nil {
 		return err
 	}
-	return nil
+
+	_, err = collection.UpdateOne(
+		context.Background(),
+		bson.M{"_id": userID},
+		bson.M{"$pull": bson.M{"items": bson.M{"_id": objectID}}},
+	)
+	return err
 }
 
 func (s *MongoStore) GetCart(userID string) ([]store.Item, error) {
 	collection := s.Store.Database(Database).Collection(CartCollection)
+	filter := bson.M{"_id": userID}
 
-	var user *store.User
-	err := collection.FindOne(context.Background(), bson.M{"_id": userID}).Decode(&user)
+	var cart struct {
+		Items []store.Item `bson:"items"`
+	}
+
+	err := collection.FindOne(context.Background(), filter).Decode(&cart)
 	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
 		return nil, err
 	}
 
-	return user.Cart, nil
+	return cart.Items, nil
+}
+
+func (s *MongoStore) CreateCart(userID string) error {
+	collection := s.Store.Database(Database).Collection(CartCollection)
+	_, err := collection.InsertOne(context.Background(), bson.M{
+		"_id":   userID,
+		"items": []store.Item{},
+	})
+	return err
 }
 
 func (s *MongoStore) GetUserByID(userID string) (*store.User, error) {

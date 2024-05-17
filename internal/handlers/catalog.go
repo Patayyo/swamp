@@ -67,25 +67,15 @@ func (ch *CatalogHandler) GetCart(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
 	}
 
-	user, err := ch.App.S.GetUserByID(userID)
-	if err != nil {
-		log.Printf("Error getting user: %v", err)
-		return c.Status(fiber.StatusInternalServerError).SendString("Failed to get user")
-	}
-
-	if user == nil {
-		log.Printf("User not found")
-		return c.Status(fiber.StatusNotFound).SendString("User not found")
-	}
-
-	if len(user.Cart) == 0 {
-		return c.JSON([]store.Item{})
-	}
-
 	cart, err := ch.App.S.GetCart(userID)
 	if err != nil {
 		log.Printf("Error getting cart: %v", err)
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to get cart")
+	}
+
+	if cart == nil {
+		log.Printf("Cart not found, returning empty cart for user: %s", userID)
+		cart = []store.Item{}
 	}
 
 	return c.JSON(cart)

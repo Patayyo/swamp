@@ -7,6 +7,7 @@ import (
 	"github.com/gorepos/usercartv2/internal/application"
 	"github.com/gorepos/usercartv2/internal/store"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type AdminHandler struct {
@@ -95,6 +96,11 @@ func (ah *AdminHandler) GetUsers(c *fiber.Ctx) error {
 func (ah *AdminHandler) GetUser(c *fiber.Ctx) error {
 	userID := c.Params("UserID")
 	log.Printf("Received userID: %s", userID)
+
+	if !bson.IsObjectIdHex(userID) {
+		log.Printf("Invalid userID format: %s", userID)
+		return c.Status(fiber.StatusBadRequest).SendString("Invalid userID format")
+	}
 
 	objectID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
