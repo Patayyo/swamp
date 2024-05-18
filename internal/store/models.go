@@ -8,6 +8,7 @@ type User struct {
 	Password string             `json:"password" bson:"password,omitempty"`
 	Cart     []Item             `json:"cart,omitempty" bson:"cart,omitempty"`
 	Role     string             `json:"role,omitempty" bson:"role,omitempty"`
+	Balance  float64            `bson:"balance"`
 }
 
 type Item struct {

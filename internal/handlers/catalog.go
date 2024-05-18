@@ -31,9 +31,30 @@ func (ch *CatalogHandler) AddItemToCart(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
 	}
 
+	item, err := ch.App.S.GetItemByID(itemID)
+	if err != nil {
+		log.Printf("Error getting item: %v", err)
+		return c.Status(fiber.StatusInternalServerError).SendString("Failed to get item")
+	}
+
+	user, err := ch.App.S.GetUserByUsername(userID)
+	if err != nil || user == nil {
+		log.Printf("Error getting user: %v", err)
+		return c.Status(fiber.StatusInternalServerError).SendString("Failed to get user")
+	}
+
+	if float64(user.Balance) < item.Price {
+		return c.Status(fiber.StatusForbidden).SendString("Insufficient balance")
+	}
+
 	if err := ch.App.S.AddItemToCart(userID, itemID); err != nil {
 		log.Printf("Error adding item to cart: %v", err)
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to add item to cart")
+	}
+
+	if err := ch.App.S.UpdateBalance(user.Username, -item.Price); err != nil {
+		log.Printf("Error updating balance: %v", err)
+		return c.Status(fiber.StatusInternalServerError).SendString("Failed to update balance")
 	}
 
 	log.Printf("Item added to cart successfully")

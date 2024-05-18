@@ -15,4 +15,5 @@ type Store interface {
 	CreateCart(string) error
 	GetUsers() ([]User, error)
 	DeleteUser(id string) error
+	UpdateBalance(username string, amount float64) error
 }

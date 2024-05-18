@@ -37,21 +37,17 @@ func NewStore() (*MongoStore, error) {
 }
 
 func CreateConnection() (*mongo.Client, error) {
-	clientOptions := options.Client().ApplyURI(ConnectionString)
-	client, err := mongo.Connect(context.TODO(), clientOptions)
+	var err error
+	db, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(ConnectionString))
 	if err != nil {
-		log.Fatalf("Failed to connect to MongoDB: %v", err)
-		return nil, err
+		log.Fatal(err)
 	}
-
-	err = client.Ping(context.TODO(), nil)
+	err = db.Ping(context.TODO(), nil)
 	if err != nil {
-		log.Fatalf("Failed to ping MongoDB: %v", err)
-		return nil, err
+		log.Fatal(err)
 	}
-
-	log.Println("Connected to MongoDB!")
-	return client, nil
+	log.Println("Connected to mongodb!")
+	return db, nil
 }
 
 func CloseConnection() {
@@ -296,4 +292,17 @@ func (s *MongoStore) GetUsers() ([]store.User, error) {
 	}
 
 	return users, nil
+}
+
+func (s *MongoStore) UpdateBalance(username string, amount float64) error {
+	collection := s.Store.Database(Database).Collection(UsersCollection)
+	filter := bson.M{"username": username}
+	update := bson.M{"$inc": bson.M{"balance": amount}}
+
+	_, err := collection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

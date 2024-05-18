@@ -26,6 +26,7 @@ func main() {
 		Username: "admin",
 		Password: "admin123",
 		Role:     "admin",
+		Balance:  1000,
 	}
 
 	if err := databaseStore.CreateUser(adminUser); err != nil {
@@ -61,6 +62,10 @@ func main() {
 	v1.Post("/cart/add/:ItemID", catalogHandler.AddItemToCart)
 	v1.Post("/cart/remove/:ItemID", catalogHandler.RemoveItemFromCart)
 	v1.Get("/cart", catalogHandler.GetCart)
+
+	currencyHandler := handlers.CurrencyHandler{App: a}
+	v1.Post("/currency/add", currencyHandler.AddCurrency)
+	v1.Post("/currency/deduct", currencyHandler.DeductCurrency)
 
 	adminHandler := handlers.AdminHandler{App: a}
 	adminMiddleware := authHandler.AdminMiddleware
