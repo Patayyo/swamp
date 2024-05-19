@@ -69,8 +69,6 @@ func main() {
 	v1.Get("/cart", catalogHandler.GetCart)
 
 	currencyHandler := handlers.CurrencyHandler{App: a}
-	v1.Post("/currency/add", currencyHandler.AddCurrency)
-	v1.Post("/currency/deduct", currencyHandler.DeductCurrency)
 
 	adminHandler := handlers.AdminHandler{App: a}
 	adminMiddleware := authHandler.AdminMiddleware
@@ -85,6 +83,9 @@ func main() {
 	admin.Get("/users", adminHandler.GetUsers)
 	admin.Get("/users/:UserID", adminHandler.GetUser)
 	admin.Delete("/users/:UserID", adminHandler.DeleteUser)
+
+	admin.Post("/currency/add", currencyHandler.AddCurrency)
+	admin.Post("/currency/deduct", currencyHandler.DeductCurrency)
 
 	err = app.Listen(":8080")
 	if err != nil {
