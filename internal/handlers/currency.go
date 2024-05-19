@@ -11,12 +11,13 @@ type CurrencyHandler struct {
 	App *application.Application
 }
 
+type CurrencyRequest struct {
+	Username string  `json:"username"`
+	Amount   float64 `json:"amount"`
+}
+
 func (ch *CurrencyHandler) AddCurrency(c *fiber.Ctx) error {
-	type Request struct {
-		Username string  `json:"username"`
-		Amount   float64 `json:"amount"`
-	}
-	var req Request
+	var req CurrencyRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString("Invalid request format")
 	}
@@ -30,11 +31,7 @@ func (ch *CurrencyHandler) AddCurrency(c *fiber.Ctx) error {
 }
 
 func (ch *CurrencyHandler) DeductCurrency(c *fiber.Ctx) error {
-	type Request struct {
-		Username string  `json:"username"`
-		Amount   float64 `json:"amount"`
-	}
-	var req Request
+	var req CurrencyRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString("Invalid request format")
 	}

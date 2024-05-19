@@ -50,6 +50,8 @@ func (ah *AuthHandler) Register(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusConflict).SendString("User already exists")
 	}
 
+	newUser.Role = "user"
+
 	if err := ah.App.S.CreateUser(newUser); err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to create user")
 	}

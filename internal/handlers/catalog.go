@@ -25,7 +25,7 @@ func (ch *CatalogHandler) AddItemToCart(c *fiber.Ctx) error {
 	itemID := c.Params("ItemID")
 
 	token := extractTokenFromRequest(c)
-	userID, err := extractUserIDFromToken(token)
+	username, err := extractUserIDFromToken(token)
 	if err != nil {
 		log.Printf("Error extracting user ID from token: %v", err)
 		return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
@@ -37,22 +37,22 @@ func (ch *CatalogHandler) AddItemToCart(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to get item")
 	}
 
-	user, err := ch.App.S.GetUserByUsername(userID)
+	user, err := ch.App.S.GetUserByUsername(username)
 	if err != nil || user == nil {
 		log.Printf("Error getting user: %v", err)
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to get user")
 	}
 
-	if float64(user.Balance) < item.Price {
+	if user.Balance < item.Price {
 		return c.Status(fiber.StatusForbidden).SendString("Insufficient balance")
 	}
 
-	if err := ch.App.S.AddItemToCart(userID, itemID); err != nil {
+	if err := ch.App.S.AddItemToCart(username, itemID); err != nil {
 		log.Printf("Error adding item to cart: %v", err)
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to add item to cart")
 	}
 
-	if err := ch.App.S.UpdateBalance(user.Username, -item.Price); err != nil {
+	if err := ch.App.S.UpdateBalance(username, -item.Price); err != nil {
 		log.Printf("Error updating balance: %v", err)
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to update balance")
 	}
@@ -65,15 +65,32 @@ func (ch *CatalogHandler) RemoveItemFromCart(c *fiber.Ctx) error {
 	itemID := c.Params("ItemID")
 
 	token := extractTokenFromRequest(c)
-	userID, err := extractUserIDFromToken(token)
+	username, err := extractUserIDFromToken(token)
 	if err != nil {
 		log.Printf("Error extracting user ID from token: %v", err)
 		return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
 	}
 
-	if err := ch.App.S.RemoveItemFromCart(userID, itemID); err != nil {
+	item, err := ch.App.S.GetItemByID(itemID)
+	if err != nil {
+		log.Printf("Error getting item: %v", err)
+		return c.Status(fiber.StatusInternalServerError).SendString("Failed to get item")
+	}
+
+	user, err := ch.App.S.GetUserByUsername(username)
+	if err != nil || user == nil {
+		log.Printf("Error getting user: %v", err)
+		return c.Status(fiber.StatusInternalServerError).SendString("Failed to get user")
+	}
+
+	if err := ch.App.S.RemoveItemFromCart(username, itemID); err != nil {
 		log.Printf("Error removing item from cart: %v", err)
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to remove item from cart")
+	}
+
+	if err := ch.App.S.UpdateBalance(username, item.Price); err != nil {
+		log.Printf("Error updating balance: %v", err)
+		return c.Status(fiber.StatusInternalServerError).SendString("Failed to update balance")
 	}
 
 	log.Printf("Item removed from cart successfully")

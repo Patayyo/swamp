@@ -151,19 +151,17 @@ func (s *MongoStore) CreateUser(user store.User) error {
 	return err
 }
 
-func (s *MongoStore) GetUserByUsername(username string) (*store.User, error) {
-	collection := s.Store.Database(Database).Collection(UsersCollection)
-
+func (ms *MongoStore) GetUserByUsername(username string) (*store.User, error) {
+	collection := ms.Store.Database(Database).Collection(UsersCollection)
+	filter := bson.M{"username": username}
 	var user store.User
-	err := collection.FindOne(context.Background(), bson.M{"username": username}).Decode(&user)
+	err := collection.FindOne(context.TODO(), filter).Decode(&user)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, nil
 		}
-		log.Printf("Error getting user by username %s: %v", username, err)
 		return nil, err
 	}
-
 	return &user, nil
 }
 
@@ -300,9 +298,13 @@ func (s *MongoStore) UpdateBalance(username string, amount float64) error {
 	update := bson.M{"$inc": bson.M{"balance": amount}}
 
 	_, err := collection.UpdateOne(context.Background(), filter, update)
-	if err != nil {
-		return err
-	}
+	return err
+}
 
-	return nil
+func (ms *MongoStore) UpdateAllUsersRole() error {
+	collection := ms.Store.Database(Database).Collection(UsersCollection)
+	filter := bson.M{"role": bson.M{"$exists": false}}
+	update := bson.M{"$set": bson.M{"role": "user"}}
+	_, err := collection.UpdateMany(context.TODO(), filter, update)
+	return err
 }

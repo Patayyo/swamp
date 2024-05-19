@@ -22,6 +22,11 @@ func main() {
 		log.Fatalf("Error creating database store: %v", err)
 	}
 
+	if err := databaseStore.UpdateAllUsersRole(); err != nil {
+		log.Fatalf("Error updating users' roles: %v", err)
+	}
+	log.Println("User roles updated successfully")
+
 	adminUser := store.User{
 		Username: "admin",
 		Password: "admin123",
