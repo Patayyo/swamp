@@ -43,3 +43,20 @@ func (ch *CurrencyHandler) DeductCurrency(c *fiber.Ctx) error {
 
 	return c.SendString("Currency deducted successfully")
 }
+
+func (ch *CurrencyHandler) GetBalance(c *fiber.Ctx) error {
+	token := extractTokenFromRequest(c)
+	username, err := extractUserIDFromToken(token)
+	if err != nil {
+		log.Printf("Error extracting user ID from token: %v", err)
+		return c.Status(fiber.StatusUnauthorized).SendString("Unauthorized")
+	}
+
+	user, err := ch.App.S.GetUserByUsername(username)
+	if err != nil || user == nil {
+		log.Printf("Error retrieving user: %v", err)
+		return c.Status(fiber.StatusInternalServerError).SendString("Failed to get user")
+	}
+
+	return c.JSON(fiber.Map{"balance": user.Balance})
+}

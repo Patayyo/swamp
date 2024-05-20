@@ -16,4 +16,5 @@ type Store interface {
 	GetUsers() ([]User, error)
 	DeleteUser(id string) error
 	UpdateBalance(username string, amount float64) error
+	GetBalance(username string) (float64, error)
 }

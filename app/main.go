@@ -69,6 +69,7 @@ func main() {
 	v1.Get("/cart", catalogHandler.GetCart)
 
 	currencyHandler := handlers.CurrencyHandler{App: a}
+	v1.Get("/currency/balance", currencyHandler.GetBalance)
 
 	adminHandler := handlers.AdminHandler{App: a}
 	adminMiddleware := authHandler.AdminMiddleware

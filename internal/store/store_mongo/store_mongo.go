@@ -308,3 +308,14 @@ func (ms *MongoStore) UpdateAllUsersRole() error {
 	_, err := collection.UpdateMany(context.TODO(), filter, update)
 	return err
 }
+
+func (s *MongoStore) GetBalance(username string) (float64, error) {
+	collection := s.Store.Database(Database).Collection(UsersCollection)
+	var user store.User
+	err := collection.FindOne(context.TODO(), bson.M{"username": username}).Decode(&user)
+	if err != nil {
+		log.Printf("Error occurred while getting balance for user %s: %v\n", username, err)
+		return 0, err
+	}
+	return user.Balance, nil
+}
