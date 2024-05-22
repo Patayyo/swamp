@@ -56,7 +56,12 @@ func (ah *AuthHandler) Register(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to create user")
 	}
 
-	return c.SendString("User registered successfully")
+	token, err := createToken(newUser.ID.Hex(), newUser.Username, newUser.Role)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString("Failed to create token")
+	}
+
+	return c.JSON(fiber.Map{"token": token, "role": newUser.Role})
 }
 
 func (ah *AuthHandler) Login(c *fiber.Ctx) error {
@@ -85,7 +90,7 @@ func (ah *AuthHandler) Login(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to create token")
 	}
 
-	return c.JSON(fiber.Map{"token": token})
+	return c.JSON(fiber.Map{"token": token, "role": user.Role})
 }
 
 func extractTokenFromRequest(c *fiber.Ctx) string {
